@@ -50,7 +50,7 @@
 
     - name: Set fact for free space in MB
       set_fact:
-        var_free_mb: "{{ (root_free.stdout | trim | int) // 1024 }}"
+        root_free_mb: "{{ (root_free.stdout | trim | int) // 1024 }}"
 
     - name: Show the free space
       debug:
@@ -101,7 +101,7 @@
 
     - name: Stop the patching if /usr free space < 2048 MB (2GB)
       fail:
-       msg: "ERROR: /usr on {{ inventory_hostname }} has only {{ usr_free_mb }} MB free. Exiting playbook."
+        msg: "ERROR: /usr on {{ inventory_hostname }} has only {{ usr_free_mb }} MB free. Exiting playbook."
       when: usr_free_mb | int < 1024
     - name: Block To check /boot
       block:
