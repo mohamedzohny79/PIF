@@ -14,6 +14,9 @@
       register: rhsm_status
       changed_when: false
       failed_when: false
+    - name: Print the rhsm_status
+      debug:
+        var: rhsm_status
 
     - name: Fail if system is not registered
       ansible.builtin.fail:
