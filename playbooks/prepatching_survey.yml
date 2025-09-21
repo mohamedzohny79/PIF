@@ -38,7 +38,6 @@
     - name: Stop the patching if /var free space < 3072 MB (3GB)
       fail:
         msg: "ERROR: /var on {{ inventory_hostname }} has only {{ var_free_mb }} MB free. Exiting playbook."
-      #when: var_free_mb | int < 3072
       when: var_free_mb | int < 800
 
 
@@ -105,28 +104,28 @@
       when: usr_free_mb | int < 1024
     - name: Block To check /boot
       block:
-      - name: Check that /boot is mounted read write
-        ansible.posix.mount:
-            path: /boot
-            state: remounted
-            opts: rw
-      - name: Get the free space on /boot (in KB)
-        ansible.builtin.shell: |
-            df -k --output=avail /boot | tail -1
-        register: boot_free
-        changed_when: false
-      - name: Set fact for free space in MB
-        set_fact:
-            boot_free_mb: "{{ (boot_free.stdout | trim | int) // 1024 }}"
-
-      - name: Show the free space
-        debug:
-          msg: "/boot has {{ boot_free_mb }} MB free space.."
-
-      - name: Stop the patching if /boot free space < 500 MB
-        fail:
-          msg: "ERROR: /boot on {{ inventory_hostname }} has only {{ boot_free_mb }} MB free. Trying to free some space...."
-        when: boot_free_mb | int < 500
+        - name: Check that /boot is mounted read write
+          ansible.posix.mount:
+              path: /boot
+              state: remounted
+              opts: rw
+        - name: Get the free space on /boot (in KB)
+          ansible.builtin.shell: |
+              df -k --output=avail /boot | tail -1
+          register: boot_free
+          changed_when: false
+        - name: Set fact for free space in MB
+          set_fact:
+              boot_free_mb: "{{ (boot_free.stdout | trim | int) // 1024 }}"
+  
+        - name: Show the free space
+          debug:
+            msg: "/boot has {{ boot_free_mb }} MB free space.."
+  
+        - name: Stop the patching if /boot free space < 500 MB
+          fail:
+            msg: "ERROR: /boot on {{ inventory_hostname }} has only {{ boot_free_mb }} MB free. Trying to free some space...."
+          when: boot_free_mb | int < 500
       rescue:
         - name: Check the current kernel version
           shell: uname -r
