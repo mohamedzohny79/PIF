@@ -15,9 +15,9 @@
       become: true
       register: script_stat
 
-    - name: Record script presence as a boolean
+    - name: Fail if the script is not exist
       ansible.builtin.fail:
-        msg: The backup script is not exist on "{{ inventory_hostname }}"
+        msg: The backup script is not exist on {{ inventory_hostname }}
       when: script_stat.stat.exists == false
 
     - name: Get the free space on /var (in KB)
