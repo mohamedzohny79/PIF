@@ -16,8 +16,8 @@
       register: script_stat
 
     - name: Record script presence as a boolean
-      ansible.builtin.fail:
-      when: script_stat.rc != 0
+      ansible.builtin.debug:
+        msg: script_stat
 
     - name: Get the free space on /var (in KB)
       ansible.builtin.shell: |
