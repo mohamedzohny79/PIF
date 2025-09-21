@@ -14,14 +14,10 @@
       register: rhsm_status
       changed_when: false
       failed_when: false
-    - name: Print the rhsm_status
-      debug:
-        var: rhsm_status
-
     - name: Fail if system is not registered
       ansible.builtin.fail:
         msg: "This system is NOT registered with Red Hat Satellite. Please register it before patching."
-      when: "'Overall Status: Current' not in rhsm_status.stdout"
+      when: rhsm_status.rc != 0
 
 
     - name: Task 2 | Check if the shell script exists
