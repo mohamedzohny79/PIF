@@ -9,6 +9,18 @@
       ansible.builtin.ping:
       register: ping_result
 
+    - name: Check if system is registered with Satellite
+      ansible.builtin.command: subscription-manager status
+      register: rhsm_status
+      changed_when: false
+      failed_when: false
+
+    - name: Fail if system is not registered
+      ansible.builtin.fail:
+        msg: "This system is NOT registered with Red Hat Satellite. Please register it before patching."
+      when: "'Overall Status: Current' not in rhsm_status.stdout"
+
+
     - name: Task 2 | Check if the shell script exists
       ansible.builtin.stat:
         path: "{{ shell_script_path }}"
@@ -20,7 +32,7 @@
         msg: The backup script is not exist on {{ inventory_hostname }}
       when: script_stat.stat.exists == false
 
-    - name: Get the free space on /var (in KB)
+    - name: Task 3 | Get the free space on /var (in KB)
       ansible.builtin.shell: |
         df -k --output=avail /var |
         tail -1
