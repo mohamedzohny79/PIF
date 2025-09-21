@@ -80,8 +80,7 @@
     - name: Stop the patching if /tmp free space < 1024 MB (1GB)
       fail:
         msg: "ERROR: /tmp on {{ inventory_hostname }} has only {{ tmp_free_mb }} MB free. Exiting playbook."
-      when: tmp_free_mb | int < 1024
-	  
+      when: tmp_free_mb | int < 1024 
     - name: Get the free space on /usr (in KB)
       ansible.builtin.shell: |
         df -k --output=avail /usr |
@@ -137,9 +136,7 @@
         - name: Delete old kernel versions
           shell: dnf remove --oldinstallonly --latest-limit=-2 kernel-core
           when: no_kernel >= 2
-		  
       always:
-
         - name: Clear dnf cache before patching
           shell: dnf clean all
           args:
