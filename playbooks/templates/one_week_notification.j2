@@ -1,0 +1,14 @@
+
+
+Subject: Upcoming Patching Notification - {{ ansible_date_time.date }}
+
+Dear Team,
+
+Please be informed that the below servers are going to be patched on {{ ansible_date_time.date }}
+
+
+{% for host in groups['all'] %}
+- {{ host }}
+{% endfor %}
+
+Regards,

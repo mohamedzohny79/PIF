@@ -1,0 +1,24 @@
+The following packages were updated on {{ ansible_hostname }}
+{% if upgraded|length > 0 %}
+Upgraded:
+{% for pkg in upgraded %}
+- {{ pkg }}
+{% endfor %}
+{% endif %}
+
+
+{% if installed|length > 0 %}
+Installed:
+{% for pkg in installed %}
+- {{ pkg }}
+{% endfor %}
+{% endif %}
+
+
+
+{% if removed|length > 0 %}
+Removed:
+{% for pkg in removed %}
+- {{ pkg }}
+{% endfor %}
+{% endif %}

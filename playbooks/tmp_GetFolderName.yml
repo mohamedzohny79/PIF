@@ -1,0 +1,23 @@
+---
+- name: Get VM folder path from vCenter
+  hosts: localhost
+  gather_facts: no
+  #connection: local
+  vars_files:
+    - ../group_vars/all.yml
+    #- ../vault/secrets.yaml
+
+  tasks:
+  - name: Gather VM info
+    community.vmware.vmware_guest_find:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: "{{ validate_certs }}"
+        name: "{{ vm_name }}"
+    register: vm_info
+    delegate_to: localhost
+
+  - name: Show VM folder path
+    debug:
+      msg: "VM Folder Path: {{ vm_info }}"

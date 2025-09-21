@@ -1,0 +1,8 @@
+- name: Prepatching Checks
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+
+    - name: Get the free space on /var (in KB)
+     

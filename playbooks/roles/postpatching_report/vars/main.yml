@@ -1,0 +1,7 @@
+file_path: /var/www/html
+EMAIL_HOST: smtp.pif.gov.sa
+EMAIL_PORT: 587
+email_to: mkannan@pif.gov.sa
+EMAIL_USERNAME: linux.alerts@pif.gov.sa
+EMAIL_PASSWORD: Kanishk@123123
+

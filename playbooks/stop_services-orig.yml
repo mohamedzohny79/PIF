@@ -1,0 +1,17 @@
+---
+
+- name: Stop services (idempotent)
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: stopped
+  loop: "{{ services_to_stop | default([]) }}"
+  become: true
+  register: stopped_services_results
+  tags: [stop_services]
+
+- name: Print stopped services
+  ansible.builtin.debug:
+    msg: "Stopped service: {{ item.item }}"
+  loop: "{{ stopped_services_results.results }}"
+  when: item.changed
+  tags: [stop_services]

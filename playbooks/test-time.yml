@@ -1,0 +1,19 @@
+---
+- name: Test Time Format
+  hosts: localhost
+  gather_facts: false
+  vars:
+    unformatted_time: "2025-09-30"
+  tasks:
+    - name: Show raw input
+      debug:
+        msg: "Input: {{ unformatted_time }}"
+
+    - name: Try parsing
+      debug:
+        msg: "{{ unformatted_time | to_datetime('%Y-%m-%d') }}"
+
+    - name: Format to rrule
+      debug:
+        msg: "{{ unformatted_time | to_datetime('%Y-%m-%d')|strftime('%Y-%m-%d') }}Z"
+       

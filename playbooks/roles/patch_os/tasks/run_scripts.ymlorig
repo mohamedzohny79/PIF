@@ -1,0 +1,34 @@
+---
+- name: Write inline script to /tmp and run it
+  block:
+    #- name: Write user-provided script to /tmp
+    #  ansible.builtin.copy:
+    #    content: "{{ backup_script }}"
+    #    dest: /tmp/user_backup_script.sh
+    #    mode: '0755'
+    #  become: true
+
+    - name: Execute user script
+      ansible.builtin.shell: 
+      args:
+        executable: /bin/bash
+      register: script_result
+      become: true
+
+  when:
+    - backup_script is defined
+    - (backup_script | trim | length) > 0
+
+# Guard: fail clearly if neither was provided
+- name: Fail if no script was provided
+  ansible.builtin.fail:
+    msg: "No script provided. Set 'backup_script' (inline script) or 'script_path' (path on target host)."
+  when:
+    - (backup_script is not defined or (backup_script | trim | length) == 0)
+    - (script_path is not defined or (script_path | trim | length) == 0)
+
+
+- name: Print script output
+  ansible.builtin.debug:
+    var: script_result.stdout_lines
+  when: script_result is defined

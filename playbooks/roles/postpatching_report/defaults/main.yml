@@ -1,0 +1,4 @@
+email_from: linux.alerts@pif.gov.sa
+to_emails: mkannan@pif.gov.sa
+email_to: "{{ to_emails.split(',') }}"
+sendemailreport: true

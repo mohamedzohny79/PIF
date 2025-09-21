@@ -1,0 +1,42 @@
+---
+- name: Start the Application
+  hosts: all
+  vars_files:
+      - ../group_vars/all.yml
+
+  gather_facts: false
+  tasks:
+    - name: Start the Application "{{ APP }}"
+      ansible.builtin.shell: "export JRE_HOME=/usr && nohup ./startup.sh"
+      args:
+        chdir: "{{ APP_HOME }}"
+      become_user: "{{ APP_USER }}"
+      become: true
+      register: startapp_result
+      tags: startapp
+
+    - name: Check app status
+      ansible.builtin.shell: "nohup ./status.sh"
+      args:
+        chdir: "{{ APP_HOME }}"
+      become_user: "{{ APP_USER }}"
+      become: true
+      register: app_status
+ 
+    - name: Confirm application service is UP
+      ansible.builtin.uri:
+        url: "http://{{ APP_URL }}:{{ APP_PORT }}"
+        method: GET
+        status_code: 200
+        return_content: no
+        validate_certs: no
+      register: app_health_check
+      retries: 3
+      delay: 10
+      until: app_health_check.status == 200
+
+    - name: App service access result
+      ansible.builtin.debug:
+        msg: "Started service: {{ APP }}"
+      when: app_health_check.status == 200
+      tags: startapp-result-msg

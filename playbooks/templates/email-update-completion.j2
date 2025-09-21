@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vm Workflow Approval</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            font-family: Tahoma, Geneva, sans-serif;
+        }
+        table td {
+            padding: 15px;
+        }
+        table thead td {
+            background-color: #54585d;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 13px;
+            border: 1px solid #54585d;
+        }
+        table tbody td {
+            color: #636363;
+            border: 1px solid #dddfe1;
+        }
+        table tbody tr {
+            background-color: #f9fafb;
+        }
+        table tbody tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+ 
+        body {
+            border-collapse: collapse;
+            font-family: Tahoma, Geneva, sans-serif;
+        }
+        a {
+            font-weight: bold;
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+    <h1> Update status Report</h1> 
+    <h3> Not all hosts were successfully updated. Kindly review the report. </h3>
+    <table>
+        <thead>
+            <tr>
+                <td>VM Name</td>
+                <td>IP</td>
+                <td>OS</td>
+                <td>Result</td>
+                <td>Success?</td>
+                <td>Reboot Required?</td>
+            </tr>
+        </thead>
+        <tbody>
+           {% for host in groups['all'] %}
+            <tr>
+                <td>{{ hostvars[host].ansible_hostname | default('Unknown') }}</td>
+		<td>{{ hostvars[host].ansible_default_ipv4.address | default('No IP found') }}</td>
+		<td>{{ hostvars[host].ansible_facts['distribution'] | default('Unknown OS') }} {{ hostvars[host].ansible_distribution_version }}</td>
+                {% set output = "" %}
+                {% if hostvars[host].ansible_facts['distribution'] == "RedHat" and hostvars[host].ansible_facts['distribution_major_version'] == "9" %}
+            	    {% set output = hostvars[host].dnf_update_status | default('No data') %}
+                {% elif hostvars[host].ansible_facts['distribution'] == "RedHat" and hostvars[host].ansible_facts['distribution_major_version'] == "8" %}
+               	    {% set output = hostvars[host].yum_update_status | default('No data') %}
+                {% elif hostvars[host].ansible_facts['distribution'] == "Debian" %}
+                    {% set output = hostvars[host].apt_update_status | default('No data') %}
+                {% endif %}
+                {% set updated = "Yes" %}
+                {% if output.rc != 0 %}
+                   {% set updated = "No" %}
+                {% endif %} 
+                <td>{{ output }}</td>
+                <td>{{ updated }} </td>
+                <td>{{ needs_restarting }}</td>
+            </tr>
+           {% endfor %}
+        </tbody>
+    </table>    
+</body>
+</html>

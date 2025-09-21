@@ -1,0 +1,47 @@
+---
+- name: Take Snapshot of the VMs before patching
+  hosts: all
+  gather_facts: false
+  vars_files:
+    - ../group_vars/all.yml
+  tasks:
+    - name: Delete the old snapshot
+      community.vmware.vmware_guest_snapshot:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        datacenter: "{{ vcenter_datacenter }}"
+        folder: "{{ vcenter_vmfolder }}"
+        name: "{{ vm_name }}"
+        state: absent
+        snapshot_name: "{{ snapshot_name }}"
+        description: "{{ snapshot_description }}"
+        memory_dump: no
+        quiesce: yes
+      become: false
+      delegate_to: localhost
+      ignore_errors: yes
+      when: take_snapshot == "True"
+    - name: Wait for 10 seconds before creating a new snapshot
+      ansible.builtin.pause:
+        seconds: 10
+
+ 
+    - name: Take a new snapshot
+      community.vmware.vmware_guest_snapshot:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        datacenter: "{{ vcenter_datacenter }}"
+        folder: "{{ vcenter_vmfolder }}"
+        name: "{{ vm_name }}"
+        state: present
+        snapshot_name: "{{ snapshot_name }}"
+        description: "{{ snapshot_description }}"
+        memory_dump: no
+        quiesce: yes
+      become: false
+      delegate_to: localhost
+      when: take_snapshot == "True"

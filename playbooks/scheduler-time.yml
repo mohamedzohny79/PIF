@@ -1,0 +1,92 @@
+---
+- name: Validate future date and time constraints
+  hosts: all
+  gather_facts: true
+  vars:
+    controller_host: https://aap.pif.gov.sa
+    controller_username: admin
+    controller_oauthtoken: Q4Djuk6FEaCVg29SwyGIy7WkQdafrZ
+    TZID: "Asia/Riyadh"
+
+
+
+  tasks:
+    - name: Get the current date and date one year from now
+      ansible.builtin.set_fact:
+        today: "{{ lookup('pipe', 'date +%Y-%m-%d') }}"
+        one_year_from_now: "{{ lookup('pipe', 'date -d \"+1 year\" +%Y-%m-%d') }}"
+      delegate_to: localhost
+
+    - name: Validate the input date format
+      ansible.builtin.shell: |
+        date -d "{{ schedule_date }}" > /dev/null
+      register: date_validation
+      ignore_errors: true
+      changed_when: false
+      delegate_to: localhost
+
+    - name: Fail if the date format is invalid
+      ansible.builtin.fail:
+        msg: "Invalid date format. Please use YYYY-MM-DD."
+      when: date_validation.rc != 0
+      delegate_to: localhost
+
+    - name: Convert input date to a comparable format
+      ansible.builtin.set_fact:
+        schedule_date_object: "{{ schedule_date | to_datetime('%Y-%m-%d') }}"
+        today_object: "{{ today | to_datetime('%Y-%m-%d') }}"
+        one_year_from_now_object: "{{ one_year_from_now | to_datetime('%Y-%m-%d') }}"
+      delegate_to: localhost
+
+    - name: Fail if the date is in the past
+      ansible.builtin.fail:
+        msg: "The specified date must be in the future."
+      when: schedule_date_object < today_object
+      delegate_to: localhost
+
+    - name: Fail if the date is more than one year in the future
+      ansible.builtin.fail:
+        msg: "The specified date cannot be more than one year in the future."
+      when: schedule_date_object > one_year_from_now_object
+      delegate_to: localhost
+
+    - name: Calculate the notification date one week prior
+      ansible.builtin.shell: "date -d '{{ schedule_date }} - 1 week' +%Y-%m-%d"
+      register: notification_date_result
+      delegate_to: localhost
+
+    - name: Validate the time format
+      ansible.builtin.assert:
+        that:
+          - schedule_time is match('^([01]\\d|2[0-3]):[0-5]\\d$')
+        fail_msg: "Invalid time format {{ schedule_time }}. Must be in HH:MM (24-hour) format"
+        success_msg: "Time input {{ schedule_time }} is valid."
+      delegate_to: localhost
+
+    - name: Set the final notification variable
+      ansible.builtin.set_fact:
+        notification_variable: "{{ notification_date_result.stdout }} {{ schedule_time }}:00"
+      delegate_to: localhost
+
+    - name: Print the notification time
+      debug:
+        msg: Notification time is {{ notification_variable }}
+
+    - name: Display the notification variable
+      ansible.builtin.debug:
+        msg: "The notification date and time is: {{ notification_variable }}"
+      delegate_to: localhost
+    - name: Schedule the task
+      ansible.controller.schedule:
+        name: "Prepatching Email Notification (One week before)"
+        state: present
+        unified_job_template: "Prepatching Email"
+        rrule: "{{ query('awx.awx.schedule_rrule', 'none', start_date=(notification_variable)) }}"
+        #rrule: "{{ query('awx.awx.schedule_rrule', 'none', start_date='2025-10-20 11:30:00') }}"
+        controller_host: "{{ controller_host }}"
+        controller_username: "{{ controller_username }}"
+        controller_oauthtoken: "{{ controller_oauthtoken }}"
+      delegate_to: localhost
+      run_once: true
+
+  

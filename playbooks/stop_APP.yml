@@ -1,0 +1,39 @@
+---
+- name: Stop the application services
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Stop the Application "{{ APP }}"
+      ansible.builtin.shell: "nohup ./shutdown.sh"
+      args:
+        chdir: "{{ APP_HOME }}"
+      become_user: "{{ APP_USER }}"
+      become: true
+      register: stopapp
+      tags: stopapp
+
+    - name: Check app status
+      ansible.builtin.shell: "nohup ./status.sh"
+      args:
+        chdir: "{{ APP_HOME }}"
+      become_user: "{{ APP_USER }}"
+      become: true
+      register: app_status
+ 
+    - name: Confirm APP service is down
+      ansible.builtin.uri:
+        url: "http://{{ APP_URL }}:{{ APP_PORT }}"
+        method: GET
+        status_code: 200
+        return_content: no
+        validate_certs: no
+      register: app_health_check
+      failed_when: false
+
+    - name: Web service access result
+      ansible.builtin.debug:
+        msg: "Stopped service: {{ APP }}"
+      when: |
+        - app_health_check.status is not defined or app_health_check.status !=200
+        - app_status.rc != 0
+      tags: stopapp-result-msg

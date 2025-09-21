@@ -1,0 +1,21 @@
+vcenter_hostname: "10.11.83.10"
+validate_certs: no
+vm_name: "{{ inventory_hostname }}"
+
+snapshot_name: "pre_patch_snapshot"
+snapshot_description: "Snapshot before patching RHEL 9 app server"
+
+# --- Health check settings ---
+#health_check:
+#  scheme: https                 # http | https
+#  host: PIFDemo.pif.gov.local   # FQDN the clients will use
+#  port: 443                     # 80 for http, 443 for https
+#  path: /                       # endpoint to test
+#  expect_status: 200            # expected HTTP status
+#  expect_regex: 'OK|Welcome'    # optional: text to find in body (regex). Empty to skip.
+#  validate_certs: false         # true in prod with proper certs
+#  retries: 30                   # total tries
+#  delay: 5                      # seconds between tries
+#  pre_tcp_wait: 120             # optional extra time right after reboot before first probe
+
+

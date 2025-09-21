@@ -1,0 +1,38 @@
+---
+- name: Patch the web server
+  hosts: all
+  gather_facts: yes
+  become: yes
+  vars_files:
+
+
+  #pre_tasks:
+    
+    
+
+
+   # - name: Take VMware snapshot before patch
+   #   ansible.builtin.include_tasks: ./roles/patch_os/tasks/snapshot.yml
+
+      
+
+  tasks:
+  - name: run patching tasks 
+    ansible.builtin.include_tasks: "./roles/patch_os/tasks/patch.yml"
+
+  - name: Reboot if required after patching
+    ansible.builtin.include_tasks: "./roles/patch_os/tasks/reboot.yml"
+    when: reboot == "yes"
+
+  post_tasks:
+    - name: Confirm system is running after patch
+      ansible.builtin.command: uptime
+      register: uptime_result
+      changed_when: false
+
+
+    - name: Build the report
+      ansible.builtin.include_role:
+        name: postpatching_report
+      run_once: yes
+      ignore_errors: true

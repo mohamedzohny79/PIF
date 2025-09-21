@@ -1,0 +1,30 @@
+---
+- name: Start the DB
+  hosts: all
+  gather_facts: false
+  vars_files:
+      - ../group_vars/all.yml
+
+
+  tasks:
+    - name: Start the DB "{{ DB_SERVICE }}"
+      ansible.builtin.shell: |
+        sh "{{ DB_START_SCRIPT }}"
+      become_user: "{{ DB_USER }}"
+      become: true
+      register: startdb_result
+      tags: stardb
+
+    - name: Check DB status
+      ansible.builtin.shell: |
+        sh "{{ DB_STATUS_SCRIPT }}"
+      become_user: "{{ DB_USER }}"
+      become: true
+      register: db_status
+ 
+
+    - name: DB service access result
+      ansible.builtin.debug:
+        msg: "Started service: {{ DB_SERVICE }}"
+      when: db_status.rc != 0
+      tags: startdb-result-msg

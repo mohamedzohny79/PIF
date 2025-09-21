@@ -1,0 +1,26 @@
+---
+- name: Patch RHEL Systems
+  hosts: all
+  gather_facts: yes
+  become: yes
+  vars_files:
+    - ../group_vars/all.yml
+
+  - block:
+    - name: check the /var available disk space
+      ansible.builtin.include_tasks: "./roles/patch_os/tasks/check_var.yml"
+      
+
+      
+
+  tasks:  
+    - ansible.builtin.include_tasks: "./roles/patch_os/tasks/stop_services-WEB.yml"
+    - ansible.builtin.include_tasks: "./roles/patch_os/tasks/stop_APP.yml"
+    - ansible.builtin.include_tasks: "./roles/patch_os/tasks/stop_services-DB.yml"
+   
+
+    #- name: Build the report
+    #  ansible.builtin.include_role:
+    #    name: postpatching_report
+    #  run_once: yes
+    #  ignore_errors: true

@@ -1,0 +1,16 @@
+---
+- name: Execute user script
+  ansible.builtin.shell: /root/scripts/before_patch.sh
+  args:
+    executable: /bin/bash
+  register: script_result
+  become: true
+  tags:
+    - script
+
+
+
+- name: Print script output
+  ansible.builtin.debug:
+    var: script_result.stdout_lines
+  when: script_result is defined

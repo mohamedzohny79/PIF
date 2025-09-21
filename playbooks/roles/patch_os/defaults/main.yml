@@ -1,0 +1,3 @@
+---
+snapshot_name: "pre_patch_snapshot"
+snapshot_description: "Snapshot before patching"

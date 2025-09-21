@@ -1,0 +1,155 @@
+---
+- name: Check ping, script, and /Var space presence on all hosts
+  hosts: all
+  gather_facts: true
+  vars:
+    shell_script_path: "/root/scripts/before_patch.sh"
+  tasks:
+    - name: Task 1 - Ping all hosts
+      ansible.builtin.ping:
+      register: ping_result
+
+    - name: Task 2 | Check if the shell script exists
+      ansible.builtin.stat:
+        path: "{{ shell_script_path }}"
+      become: true
+      register: script_stat
+
+    - name: Record script presence as a boolean
+      ansible.builtin.set_fact:
+        has_script: "{{ script_stat.stat.exists | default(false) }}"
+
+    - name: Get the free space on /var (in KB)
+      ansible.builtin.shell: |
+        df -k --output=avail /var |
+        tail -1
+      register: var_free
+      changed_when: false
+
+    - name: Set fact for free space in MB
+      set_fact:
+        var_free_mb: "{{ (var_free.stdout | trim | int) // 1024 }}"
+
+    - name: Show the free space
+      debug:
+        msg: "/var has {{ var_free_mb }} MB free space.."
+
+
+    - name: Stop the patching if /var free space < 3072 MB (3GB)
+      fail:
+        msg: "ERROR: /var on {{ inventory_hostname }} has only {{ var_free_mb }} MB free. Exiting playbook."
+      #when: var_free_mb | int < 3072
+      when: var_free_mb | int < 800
+
+
+    - name: Get the free space on /root (in KB)
+      ansible.builtin.shell: |
+        df -k --output=avail /root | tail -1
+      register: root_free
+      changed_when: false
+
+    - name: Set fact for free space in MB
+      set_fact:
+        var_free_mb: "{{ (root_free.stdout | trim | int) // 1024 }}"
+
+    - name: Show the free space
+      debug:
+        msg: "/root has {{ root_free_mb }} MB free space.."
+
+
+    - name: Stop the patching if /root free space < 2048 MB (2GB)
+      fail:
+        msg: "ERROR: /root on {{ inventory_hostname }} has only {{ root_free_mb }} MB free. Exiting playbook."
+      when: root_free_mb | int < 2048
+
+    - name: Get the free space on /tmp (in KB)
+      ansible.builtin.shell: |
+        df -k --output=avail /tmp |
+        tail -1
+      register: tmp_free
+      changed_when: false
+
+    - name: Set fact for free space in MB
+      set_fact:
+        tmp_free_mb: "{{ (tmp_free.stdout | trim | int) // 1024 }}"
+
+    - name: Show the free space
+      debug:
+        msg: "/tmp has {{ tmp_free_mb }} MB free space.."
+
+
+    - name: Stop the patching if /tmp free space < 1024 MB (1GB)
+      fail:
+        msg: "ERROR: /tmp on {{ inventory_hostname }} has only {{ tmp_free_mb }} MB free. Exiting playbook."
+      when: tmp_free_mb | int < 1024
+	  
+    - name: Get the free space on /usr (in KB)
+      ansible.builtin.shell: |
+        df -k --output=avail /usr |
+        tail -1
+      register: usr_free
+      changed_when: false
+
+    - name: Set fact for free space in MB
+      set_fact:
+        usr_free_mb: "{{ (usr_free.stdout | trim | int) // 1024 }}"
+
+    - name: Show the free space
+      debug:
+        msg: "/usr has {{ usr_free_mb }} MB free space.."
+
+
+    - name: Stop the patching if /usr free space < 2048 MB (2GB)
+      fail:
+       msg: "ERROR: /usr on {{ inventory_hostname }} has only {{ usr_free_mb }} MB free. Exiting playbook."
+      when: usr_free_mb | int < 1024
+    - name: Block To check /boot
+      block:
+      - name: Check that /boot is mounted read write
+        ansible.posix.mount:
+            path: /boot
+            state: remounted
+            opts: rw
+      - name: Get the free space on /boot (in KB)
+        ansible.builtin.shell: |
+            df -k --output=avail /boot | tail -1
+        register: boot_free
+        changed_when: false
+      - name: Set fact for free space in MB
+        set_fact:
+            boot_free_mb: "{{ (boot_free.stdout | trim | int) // 1024 }}"
+
+      - name: Show the free space
+        debug:
+          msg: "/boot has {{ boot_free_mb }} MB free space.."
+
+      - name: Stop the patching if /boot free space < 500 MB
+        fail:
+          msg: "ERROR: /boot on {{ inventory_hostname }} has only {{ boot_free_mb }} MB free. Trying to free some space...."
+        when: boot_free_mb | int < 500
+      rescue:
+        - name: Check the current kernel version
+          shell: uname -r
+          register: current_kernel
+        - name: Find how many kernels are installed
+          shell: rpm -q kernel-core | grep -v {{ current_kernel }}|wc -l
+          register: no_kernel
+
+        - name: Delete old kernel versions
+          shell: dnf remove --oldinstallonly --latest-limit=-2 kernel-core
+          when: no_kernel >= 2
+		  
+      always:
+
+        - name: Clear dnf cache before patching
+          shell: dnf clean all
+          args:
+            warn: false
+
+
+        - name: Run backup script before patching
+          ansible.builtin.include_tasks: "./roles/patch_os/tasks/run_scripts.yml"
+          tags:
+            - run_backup_script
+
+

@@ -1,0 +1,20 @@
+---
+- name: Get the free space on /var (in KB)
+  ansible.builtin.shell: |
+    df -k --output=avail /var |
+    tail -1
+  register: var_free
+  changed_when: false
+
+- name: Set fact for free space in MB
+  set_fact:
+    var_free_mb: "{{ (var_free.stdout | trim | int) // 1024 }}"
+
+- name: Show the free space
+  debug:
+    msg: "/var has {{ var_free_mb }} MB free space.."
+
+- name: Stop the patching if /var free space < 3072 MB (3GB)
+  fail:
+    msg: "ERROR: /var on {{ inventory_hostname }} has only {{ var_free_mb }} MB free. Exiting playbook."
+  when: var_free_mb | int < 5170

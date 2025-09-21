@@ -1,0 +1,15 @@
+---
+- name: Send Postpatching email
+  community.general.mail:
+    host: "{{ smtp_host }}"
+    port: "{{ smtp_port }}"
+    subject: "Patching Completed!"
+    body: "{{ lookup('template', 'templates/postpatching_email.j2') }}"
+    from: "Ansible Automation Platform <linux.alerts@pif.gov.sa>"
+    to: "{{ email_to }}"
+    username: "{{ email_username }}"
+    password: "{{ email_password }}"
+    subtype: html
+    charset: utf8
+  run_once: true
+  

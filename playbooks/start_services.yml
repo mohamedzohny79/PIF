@@ -1,0 +1,22 @@
+---
+- name: Patch RHEL Systems
+  hosts: all
+  gather_facts: yes
+  become: yes
+  vars_files:
+    - ../group_vars/all.yml
+
+
+      
+
+  tasks:  
+    - ansible.builtin.include_tasks: "./roles/patch_os/tasks/start_services-DB.yml"
+    - ansible.builtin.include_tasks: "./roles/patch_os/tasks/start_APP.yml"
+    - ansible.builtin.include_tasks: "./roles/patch_os/tasks/start_services-WEB.yml"
+   
+
+    #- name: Build the report
+    #  ansible.builtin.include_role:
+    #    name: postpatching_report
+    #  run_once: yes
+    #  ignore_errors: true

@@ -1,0 +1,28 @@
+---
+- name: Stop the Web Services
+  hosts: all
+  gather_facts: true
+  tasks:
+
+    - name: Stop the web service {{ WEB_SERVICE }}
+      ansible.builtin.systemd:
+        name: "{{ WEB_SERVICE }}"
+        state: stopped
+      become: true
+      tags: stopweb
+
+    - name: Confirm web service is down
+      ansible.builtin.uri:
+        url: "http://{{ WEB_URL }}:{{ WEB_PORT }}"
+        method: GET
+        status_code: 200
+        return_content: no
+        validate_certs: no
+      register: web_health_check
+      failed_when: false
+
+    - name: Web service access result
+      ansible.builtin.debug:
+        msg: "Stopped service: {{ WEB_SERVICE }}"
+      when: web_health_check.status is not defined or web_health_check.status !=200
+      tags: stopweb_result_msg

@@ -1,0 +1,27 @@
+---
+- name: Stop the Database Services
+  hosts: all
+  gather_facts: true
+  tasks:
+
+    - name: Stop the DB "{{ DB_SERVICE }}"
+      ansible.builtin.shell: |
+        sh "{{ DB_STOP_SCRIPT }}"
+      become_user: "{{ DB_USER }}"
+      become: true
+      register: stopdb
+      tags: stopdb
+
+    - name: Check app status
+      ansible.builtin.shell: |
+        sh "{{ DB_STATUS_SCRIPT }}"
+      become_user: "{{ DB_USER }}"
+      become: true
+      register: db_status
+ 
+
+    - name: DB service access result
+      ansible.builtin.debug:
+        msg: "Stopped service: {{ DB_SERVICE }}"
+      when: db_status.rc != 0
+      tags: stopdb-result-msg

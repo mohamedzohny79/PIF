@@ -1,0 +1,7 @@
+- name: Test Template
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Get the schedule time
+      debug:
+        msg: "THe task will run in {{ notification_week }}"
