@@ -16,8 +16,9 @@
       register: script_stat
 
     - name: Record script presence as a boolean
-      ansible.builtin.debug:
-        msg: "{{ script_stat }}"
+      ansible.builtin.fail:
+        msg: The backup script is not exist on "{{ inventory_hostname }}"
+      when: script_stat.stat.exists = false
 
     - name: Get the free space on /var (in KB)
       ansible.builtin.shell: |
