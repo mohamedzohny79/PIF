@@ -1,5 +1,5 @@
 ---
-- name: Check ping, script, and /Var space presence on all hosts
+- name: Perform Prepatching Necessary Checks
   hosts: all
   gather_facts: true
   vars:
