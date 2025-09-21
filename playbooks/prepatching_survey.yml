@@ -147,4 +147,26 @@
           tags:
             - run_backup_script
 
+        - name: Ensure /root/repos directory exists
+          ansible.builtin.file:
+            path: /root/repos
+            state: directory
+            owner: root
+            group: root
+            mode: '0755'
+
+        - name: Find repo files except redhat.repo
+          ansible.builtin.find:
+            paths: /etc/yum.repos.d
+            patterns: "*.repo"
+          register: repo_files
+        
+        - name: Move non-redhat.repo files to /root/repos
+          ansible.builtin.command: >
+            mv {{ item.path }} /root/repos/
+          loop: "{{ repo_files.files | selectattr('path', 'search', '/etc/yum.repos.d/(?!redhat\\.repo$)') | list }}"
+          when: repo_files.matched > 0
+          become: true
+
+
 
