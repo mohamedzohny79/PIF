@@ -120,20 +120,24 @@
         - name: Check the current kernel version
           ansible.builtin.command: uname -r
           register: current_kernel
+          changed_when: always
         - name: Find how many kernels are installed
           ansible.builtin.shell: set -o pipefail && rpm -q kernel-core | grep -v {{ current_kernel }}|wc -l
           register: no_kernel
+          changed_when: never
 
         - name: Delete old kernel versions
           ansible.builtin.shell: set -o pipefail && dnf remove --oldinstallonly --latest-limit=-2 kernel-core
+          register: results
           when: no_kernel >= 2
+          changed_when: results.rc == 0
 
       always:
 
         - name: Clear dnf cache before patching
-          ansible.builtin.shell: dnf clean all
-          args:
-            warn: false
+          ansible.builtin.command: dnf clean all
+          register: dnf_result
+          changed_when: dnf_result.rc == 0
 
 
         - name: Run backup script before patching
