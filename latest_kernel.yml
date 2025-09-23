@@ -1,0 +1,28 @@
+- name: Check the running kernel version
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Get the current running kernel
+      ansible.builtin.command: uname -r
+      register: running_kernel
+      changed_when: false
+    
+    - name: Get latest installed kernel
+      ansible.builtin.shell: |
+        rpm -q kernel | sort -V | tail -n 1 | sed 's/^kernel-//'
+      register: latest_kernel
+      changed_when: false
+
+    - name: Print the versions
+      ansible.builtin.debug:
+        msg: "Running: {{ running_kernel.stdout }}, Latest: {{ latest_kernel.stdout }}"
+
+    - name: Fail if not running latest kernel
+      ansible.builtin.fail:
+        msg: >
+          System is not booted into the latest kernel.
+          Running: {{ running_kernel.stdout }},
+          Latest: {{ latest_kernel.stdout }}
+      when: running_kernel.stdout != latest_kernel.stdout
+

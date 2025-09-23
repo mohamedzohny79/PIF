@@ -1,0 +1,23 @@
+---
+- name: Get the current time
+  hosts: localhost
+  gather_facts: true
+  vars:
+    timenow: "2025-09-22 15:06:00"
+    controller_host: https://aap.pif.gov.sa
+    controller_username: admin
+    controller_oauthtoken: Q4Djuk6FEaCVg29SwyGIy7WkQdafrZ
+
+  tasks:
+    - name: Schedule the task
+      ansible.controller.schedule:
+        name: "Prepatching Email Notification (One week before)"
+        state: present
+        unified_job_template: "Prepatching Email"
+        rrule: "{{ query('awx.awx.schedule_rrule', 'none', start_date='2025-10-01 10:00:00', timezone='Asia/Riyadh') }}"
+        #rrule: "{{ query('awx.awx.schedule_rrule', 'none', start_date='2025-10-20 11:30:00') }}"
+        controller_host: "{{ controller_host }}"
+        controller_username: "{{ controller_username }}"
+        controller_oauthtoken: "{{ controller_oauthtoken }}"
+      delegate_to: localhost
+      run_once: true 

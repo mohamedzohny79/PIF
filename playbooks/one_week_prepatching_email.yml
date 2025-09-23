@@ -1,0 +1,32 @@
+---
+- name: Send prepatching email
+  hosts: all
+  gather_facts: true
+  vars:
+    EMAIL_HOST: smtp.pif.gov.sa
+    EMAIL_PORT: 587
+    email_to: mkannan@pif.gov.sa
+    EMAIL_USERNAME: linux.alerts@pif.gov.sa
+    EMAIL_PASSWORD: Kanishk@123123
+    email_from: linux.alerts@pif.gov.sa
+    to_emails: mkannan@pif.gov.sa
+    email_to: "{{ to_emails.split(',') }}"
+
+  tasks:
+    - name: Send Notification via E-mail
+      community.general.mail:
+        host: "{{ EMAIL_HOST }}"
+        username: "{{ EMAIL_USERNAME }}"
+        password: "{{ EMAIL_PASSWORD }}"
+        port: "{{ EMAIL_PORT }}"
+        subject: "Linux Patching Report"
+        body: "{{ lookup('template', 'templates/one_week_notification.j2') }}"
+        from: "{{ email_from }}"
+        to: "{{ email_to }}"
+        subtype: html
+      delegate_to: localhost
+      become: false
+      check_mode: false
+      run_once: true
+  #when: sendemailreport
+

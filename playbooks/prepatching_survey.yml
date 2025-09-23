@@ -2,6 +2,7 @@
 - name: Perform Prepatching Necessary Checks
   hosts: all
   gather_facts: true
+  become: true
   vars:
     shell_script_path: "/root/scripts/before_patch.sh"
   tasks:
@@ -14,6 +15,7 @@
       register: rhsm_status
       changed_when: false
       failed_when: false
+      become: true
     - name: Fail if system is not registered
       ansible.builtin.fail:
         msg: "This system is NOT registered with Red Hat Satellite. Please register it before patching."
@@ -120,6 +122,7 @@
               path: /boot
               state: remounted
               opts: rw
+          become: true
         - name: Get the free space on /boot (in KB)
           ansible.builtin.shell: |
               df -k --output=avail /boot | tail -1
@@ -135,22 +138,30 @@
   
         - name: Stop the patching if /boot free space < 500 MB
           fail:
-            msg: "ERROR: /boot on {{ inventory_hostname }} has only {{ boot_free_mb }} MB free. Trying to free some space...."
+            msg: "ERROR: /boot on {{ inventory_hostname }} has only {{ boot_free_mb }} MB free. Checking the installed kernels...."
           when: boot_free_mb | int < 500
       rescue:
         - name: Check the current kernel version
           shell: uname -r
           register: current_kernel
         - name: Find how many kernels are installed
-          shell: rpm -q kernel-core | grep -v {{ current_kernel }}|wc -l
-          register: no_kernel
+          shell: rpm -q kernel-core | grep -v {{ current_kernel.stdout }}|wc -l
+          register: no_kernels
+          changed_when: False
+
+        - name: Fail if no more than one kernel installed
+          fail:
+            msg: "Only the running kernel is installed, /boot still have space issue.."
+          when: no_kernels.stdout|int <= 1
 
         - name: Delete old kernel versions
-          shell: dnf remove --oldinstallonly --latest-limit=-2 kernel-core
-          when: no_kernel >= 2
+          shell: dnf remove -y $(dnf rq --installonly --latest-limit=-2)
+          when: no_kernels.stdout|int >= 2
+          notify: Check /boot space
       always:
         - name: Clear dnf cache before patching
           shell: dnf clean all
+          become: true
 
 
         - name: Run backup script before patching
@@ -165,6 +176,7 @@
             owner: root
             group: root
             mode: '0755'
+          become: true
 
         - name: Find repo files except redhat.repo
           ansible.builtin.find:
@@ -178,6 +190,32 @@
           loop: "{{ repo_files.files | selectattr('path', 'search', '/etc/yum.repos.d/(?!redhat\\.repo$)') | list }}"
           when: repo_files.matched > 0
           become: true
-
-
+  handlers:
+    - name: Check that /boot is mounted read write
+      ansible.posix.mount:
+        path: /boot
+        state: remounted
+        opts: rw
+      listen: Check /boot space
+    - name: Get the free space on /boot (in KB)
+      ansible.builtin.shell: |
+        df -k --output=avail /boot | tail -1
+      register: boot_free
+      changed_when: false
+      listen: Check /boot space
+    - name: Set fact for free space in MB
+      set_fact:
+        boot_free_mb: "{{ (boot_free.stdout | trim | int) // 1024 }}"
+      listen: Check /boot space
+  
+    - name: Show the free space
+      debug:
+        msg: "/boot has {{ boot_free_mb }} MB free space.."
+      listen: Check /boot space
+  
+    - name: Stop the patching if /boot free space < 500 MB
+      fail:
+        msg: "ERROR: /boot on {{ inventory_hostname }} has only {{ boot_free_mb }} MB free. FAILED to free up some space...."
+      when: boot_free_mb | int < 500
+      listen: Check /boot space
 
