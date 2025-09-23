@@ -71,28 +71,12 @@
         schedule_date_time: "{{ schedule_date }} {{ schedule_time }}"
     
     - name: Calculate the notification time one hour prior
-      set_fact:
-        one_hour_before: >-
-          {{ (schedule_date_time | to_datetime('%Y-%m-%d %H:%M') - timedelta(hours=1)) | strftime('%Y-%m-%d %H:%M') }}"
+      command: date -d '-1 hour {{ schedule_date_time }}'
+      register: one_hour_before
 
-    - name: Show the timezone
-      shell: timedatectl
-      register: timedatectl
-
-    - name: Print the timedate
-      debug:
-        var: timedatectl.stdout
-
-    - name: Print the schedule time
-      debug:
-        var: schedule_date_time
-    - name: Debug the one hour
+    - name: Print one hour before time
       debug:
         var: one_hour_before
-
-    - name: Set one hour before fact
-      ansible.builtin.set_fact:
-        one_hour_before: "{{ one_hour_before_result.stdout }}:00"
 
     - name: Set the morning notification facts
       ansible.builtin.set_fact:
@@ -140,7 +124,7 @@
         name: "Prepatching one hour before Notification"
         state: present
         unified_job_template: "One Hour Prepatching Email"
-        rrule: "{{ query('awx.awx.schedule_rrule', 'none', start_date=(one_hour_before), timezone='Asia/Riyadh') }}"
+        rrule: "{{ query('awx.awx.schedule_rrule', 'none', start_date=(one_hour_before.stdout), timezone='Asia/Riyadh') }}"
         #rrule: "{{ query('awx.awx.schedule_rrule', 'none', start_date='2025-10-20 11:30:00') }}"
         controller_host: "{{ controller_host }}"
         controller_username: "{{ controller_username }}"
