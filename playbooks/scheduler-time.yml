@@ -11,11 +11,11 @@
 
 
   tasks:
-    - name: Get the current date and date one year from now
-      ansible.builtin.set_fact:
-        today: "{{ lookup('pipe', 'date +%Y-%m-%d') }}"
-        one_year_from_now: "{{ lookup('pipe', 'date -d \"+1 year\" +%Y-%m-%d') }}"
-      delegate_to: localhost
+    #- name: Get the current date and date one year from now
+    #  ansible.builtin.set_fact:
+    #    today: "{{ lookup('pipe', 'date +%Y-%m-%d') }}"
+    #    one_year_from_now: "{{ lookup('pipe', 'date -d \"+1 year\" +%Y-%m-%d') }}"
+    #  delegate_to: localhost
 
     - name: Debug one year from now
       debug:
