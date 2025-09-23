@@ -3,9 +3,9 @@
   hosts: all
   gather_facts: true
   vars:
-    controller_host: https://aap.pif.gov.sa
+    controller_host: https://192.168.122.26
     controller_username: admin
-    controller_oauthtoken: Q4Djuk6FEaCVg29SwyGIy7WkQdafrZ
+    controller_oauthtoken: siiOGXGpZyDIyrESePDg0Ftr4HC5HK
     TZID: "Asia/Riyadh"
 
 
