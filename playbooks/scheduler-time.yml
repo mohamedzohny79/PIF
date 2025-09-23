@@ -73,7 +73,6 @@
     - name: Calculate the notification time one hour prior
       set_fact:
         one_hour_before: >-
-          #{{ (schedule_date_time | to_datetime('%Y-%m-%d %H:%M') | int - 3600) | to_datetime | strftime('%Y-%m-%d %H:%M')
           {{ (schedule_date_time | to_datetime('%Y-%m-%d %H:%M') - '3600'| int) | strftime('%Y-%m-%d %H:%M') }}"
 
     - name: Show the timezone
