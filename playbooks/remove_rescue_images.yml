@@ -13,13 +13,13 @@
       ansible.builtin.set_fact:
         sorted_rescue_kernels: "{{ rescue_kernels.files | sort(attribute='mtime', reverse=True) }}"
 
-    - name: Keep most recent rescue kernel, remove older ones
+    - name: Keep 2 most recent rescue kernels, remove older ones
       ansible.builtin.file:
         path: "{{ item.path }}"
         state: absent
-      loop: "{{ sorted_rescue_kernels[1:] }}"
+      loop: "{{ sorted_rescue_kernels[2:] }}"
       register: removed_kernels
-      when: sorted_rescue_kernels | length > 1
+      when: sorted_rescue_kernels | length > 2
 
     - name: Remove corresponding loader entry files
       ansible.builtin.file:
