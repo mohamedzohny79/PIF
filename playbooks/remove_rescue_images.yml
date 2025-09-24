@@ -1,0 +1,29 @@
+- name: Clean up old rescue kernels
+  hosts: all
+  become: yes
+  tasks:
+    - name: Find rescue kernel files
+      ansible.builtin.find:
+        paths: /boot
+        patterns: "vmlinuz-0-rescue-*"
+        file_type: file
+      register: rescue_kernels
+
+    - name: Sort rescue kernels by modification time (newest first)
+      ansible.builtin.set_fact:
+        sorted_rescue_kernels: "{{ rescue_kernels.files | sort(attribute='mtime', reverse=True) }}"
+
+    - name: Keep most recent rescue kernel, remove older ones
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ sorted_rescue_kernels[1:] }}"
+      register: removed_kernels
+      when: sorted_rescue_kernels | length > 1
+
+    - name: Remove corresponding loader entry files
+      ansible.builtin.file:
+        path: "/boot/loader/entries/{{ item.path | basename | regex_replace('^vmlinuz-0-rescue-', '') }}.conf"
+        state: absent
+      loop: "{{ removed_kernels.results | map(attribute='item') | list }}"
+      when: removed_kernels is defined
