@@ -14,16 +14,38 @@
         sorted_rescue_kernels: "{{ rescue_kernels.files | sort(attribute='mtime', reverse=True) }}"
 
     - name: Keep 2 most recent rescue kernels, remove older ones
-      ansible.builtin.file:
-        path: "{{ item.path }}"
-        state: absent
-      loop: "{{ sorted_rescue_kernels[2:] }}"
-      register: removed_kernels
+      ansible.builtin.set_fact:
+        old_rescue_kernels: "{{ sorted_rescue_kernels[2:] | map(attribute='path') | list }}"
       when: sorted_rescue_kernels | length > 2
 
-    - name: Remove corresponding loader entry files
+    - name: Build list of files to remove (kernel, initramfs, loader entry)
+      ansible.builtin.set_fact:
+        files_to_remove: >-
+          {{
+            old_rescue_kernels
+            | map('basename')
+            | map('regex_replace', '^vmlinuz-0-rescue-(.*)$', '\1')
+            | map('regex_replace', '^(.*)$', '/boot/vmlinuz-0-rescue-\1')
+            + old_rescue_kernels
+            | map('basename')
+            | map('regex_replace', '^vmlinuz-0-rescue-(.*)$', '\1')
+            | map('regex_replace', '^(.*)$', '/boot/initramfs-0-rescue-\1.img')
+            + old_rescue_kernels
+            | map('basename')
+            | map('regex_replace', '^vmlinuz-0-rescue-(.*)$', '\1')
+            | map('regex_replace', '^(.*)$', '/boot/loader/entries/\1.conf')
+          }}
+      when: old_rescue_kernels is defined
+
+    - name: Remove old rescue kernel, initramfs, and loader entries
       ansible.builtin.file:
-        path: "/boot/loader/entries/{{ item.path | basename | regex_replace('^vmlinuz-0-rescue-', '') }}.conf"
+        path: "{{ item }}"
         state: absent
-      loop: "{{ removed_kernels.results | map(attribute='item') | list }}"
-      when: removed_kernels is defined
+      loop: "{{ files_to_remove | default([]) }}"
+      register: removed_files
+      when: files_to_remove is defined
+
+    - name: Print removed files
+      ansible.builtin.debug:
+        msg: "{{ removed_files.results | selectattr('changed','equalto',true) | map(attribute='item') | list }}"
+      when: removed_files is defined
