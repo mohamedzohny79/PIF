@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Server Patching Notification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333333;
+        }
+        .container {
+            width: 600px;
+            margin: 0 auto;
+        }
+        h2 {
+            color: #2a7ae2;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #dddddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 0.9em;
+            color: #777777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Upcoming Server Patching Notification</h2>
+        <p>Hello,</p>
+        <p>The following servers are scheduled for patching:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Server Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for host in ansible_play_hosts_all | sort %}
+                <tr>
+                    <td>{{ host }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <p>Please ensure that any critical services are prepared.</p>
+
+        <div class="footer">
+            <p>This is an automated message sent by Ansible.</p>
+        </div>
+    </div>
+</body>
+</html>
