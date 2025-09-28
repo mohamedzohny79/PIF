@@ -141,6 +141,8 @@
             msg: "ERROR: /boot on {{ inventory_hostname }} has only {{ boot_free_mb }} MB free. Checking the installed kernels...."
           when: boot_free_mb | int < 500
       rescue:
+        - name: Remove the old rescue images
+          ansible.builtin.include_tasks: ./roles/patch_os/tasks/remove_rescue_images.yml 
         - name: Check the current kernel version
           shell: uname -r
           register: current_kernel

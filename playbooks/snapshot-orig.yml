@@ -6,32 +6,6 @@
     - ../group_vars/all.yml
     - ../group_vars/vmware-creds.yml
   tasks:
-    - name: Find the VM with a case-insensitve name match
-      community.vmware.vmware_vm_info:
-        hostname: "{{ vcenter_hostname }}"
-        username: "{{ vcenter_username }}"
-        password: "{{ vcenter_password }}"
-        validate_certs: no
-      register: vm_info
-      delegate_to: localhost
-    
-    - name: Set the actual machine name
-      set_fact:
-        hostname_lower: "{{ ansible_hostname | lower }}"
-        hostname_upper: "{{ ansible_hostname | upper }}"
-    - name: Find the VM by name
-      set_fact:
-        actual_vm_name: >-
-          {{
-            vm_info.virtual_machines
-            | selectattr('guest_name', 'match', '^(' + hostname_lower + '|' + hostname_upper + ')$', ignorecase=True)
-            | list
-            | first
-            }}
-    - name: Print the vm name
-      debug:
-        var: actual_vm_name
-
     - name: Delete the old snapshot
       community.vmware.vmware_guest_snapshot:
         hostname: "{{ vcenter_hostname }}"
@@ -40,11 +14,12 @@
         validate_certs: no
         datacenter: "{{ vcenter_datacenter }}"
         folder: "{{ vcenter_vmfolder }}"
-        name: "{{ actual_vm_name.guest_name }}"
+        name: "{{ ansible_hostname }}"
         state: absent
         snapshot_name: "{{ snapshot_name }}"
         description: "{{ snapshot_description }}"
         memory_dump: no
+        ignore_case: true
         quiesce: yes
       become: false
       delegate_to: localhost
@@ -63,12 +38,13 @@
         validate_certs: no
         datacenter: "{{ vcenter_datacenter }}"
         folder: "{{ vcenter_vmfolder }}"
-        name: "{{ actual_vm_name }}"
+        name: "{{ ansible_hostname }}"
         state: present
         snapshot_name: "{{ snapshot_name }}"
         description: "{{ snapshot_description }}"
         memory_dump: no
         quiesce: yes
+        ignore_case: true
       become: false
       delegate_to: localhost
       when: take_snapshot == "yes"

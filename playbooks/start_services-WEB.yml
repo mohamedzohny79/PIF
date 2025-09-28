@@ -12,21 +12,16 @@
         name: "{{ WEB_SERVICE }}"
         state: started
       become: true
-      register: startweb-result
       tags: startweb
 
     - name: Confirm web service is UP
       ansible.builtin.uri:
-      url: "http://{{ WEB_URL }}:{{ WEB_PORT }}"
+        url: "http://{{ WEB_URL }}:{{ WEB_PORT }}"
         method: GET
         status_code: 200
         return_content: no
         validate_certs: no
-        retries: 3
-      delay: 10
       register: web_health_check
-      until: web_health_check.status == 200  
-
     - name: Web service access result
       ansible.builtin.debug:
         msg: "Started service: {{ WEB_SERVICE }}"

@@ -7,7 +7,8 @@
     subject: "Linux Patching Report"
     body: "{{ lookup('template', 'report.j2') }}"
     from: "{{ email_from }}"
-    to: "{{ email_to }}"
+    to: "{{ to }}"
+    cc: "{{ cc }}"
     subtype: html
   delegate_to: localhost
   become: false

@@ -7,7 +7,7 @@
       ansible.builtin.command: uname -r
       register: running_kernel
       changed_when: false
-    
+
     - name: Get latest installed kernel
       ansible.builtin.shell: |
         rpm -q kernel | sort -V | tail -n 1 | sed 's/^kernel-//'
@@ -26,3 +26,14 @@
           Latest: {{ latest_kernel.stdout }}
       when: running_kernel.stdout != latest_kernel.stdout
 
+    - name: Check if /root/repos directory exists
+      ansible.builtin.stat:
+        path: /root/repos
+      register: repos_folder
+
+    - name: Move original repo files from /root/repos to /etc/yum.repos.d/
+      ansible.builtin.command: mv /root/repos/*.repo /etc/yum.repos.d/
+      args:
+        removes: /root/repos/*.repo
+      when: repos_folder.stat.exists
+      ignore_errors: yes

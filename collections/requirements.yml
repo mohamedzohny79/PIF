@@ -4,4 +4,3 @@ collections:
   - name: community.general
   - name: ansible.controller
   - name: ansible.posix
-  - name: awx.awx

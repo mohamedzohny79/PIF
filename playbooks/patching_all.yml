@@ -4,15 +4,8 @@
   gather_facts: yes
   become: yes
   vars_files:
+    - ../group_vars/email-creds.yml 
 
-
-  #pre_tasks:
-    
-    
-
-
-   # - name: Take VMware snapshot before patch
-   #   ansible.builtin.include_tasks: ./roles/patch_os/tasks/snapshot.yml
 
       
 

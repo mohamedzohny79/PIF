@@ -3,9 +3,9 @@
   hosts: all
   gather_facts: true
   vars:
-    controller_host: https://192.168.122.26
+    controller_host: https://aap.pif.gov.sa
     controller_username: admin
-    controller_oauthtoken: siiOGXGpZyDIyrESePDg0Ftr4HC5HK
+    controller_oauthtoken: Q4Djuk6FEaCVg29SwyGIy7WkQdafrZ
     TZID: "Asia/Riyadh"
 
 
@@ -16,10 +16,6 @@
         today: "{{ lookup('pipe', 'date +%Y-%m-%d') }}"
         one_year_from_now: "{{ lookup('pipe', 'date -d \"+1 year\" +%Y-%m-%d') }}"
       delegate_to: localhost
-
-    - name: Debug one year from now
-      debug:
-        var: one_year_from_now
 
     - name: Validate the input date format
       ansible.builtin.shell: |
@@ -69,26 +65,35 @@
     - name: Set the Schedule Time
       set_fact:
         schedule_date_time: "{{ schedule_date }} {{ schedule_time }}"
-    
+        schedule_date_time_S: "{{ schedule_date }} {{ schedule_time }}:00"
     - name: Calculate the notification time one hour prior
-      command: date -d '-1 hour {{ schedule_date_time }}'
+      command: date -d '-1 hour {{ schedule_date_time }}' +'%Y-%m-%d %H:%M:%S'
       register: one_hour_before
-
-    - name: Print one hour before time
-      debug:
-        var: one_hour_before
-
+ 
     - name: Set the morning notification facts
       ansible.builtin.set_fact:
         morning_notification: "{{ schedule_date }} 10:00:00"
-    - name: Print one hour before
-      debug:
-        var: one_hour_before
+    
     - name: Set the final notification variable
       ansible.builtin.set_fact:
         notification_variable: "{{ notification_date_result.stdout }} {{ schedule_time }}:00"
       delegate_to: localhost
 
+    - name: Schedule The Patching Workflow
+      vars:
+        TZID: "Asia/Riyadh"
+      ansible.controller.schedule:
+        name: "Schedule the patching workflow"
+        state: present
+        unified_job_template: "Web_App_DB_OS_Patching"
+        rrule: "{{ query('awx.awx.schedule_rrule', 'none', start_date=(schedule_date_time_S), timezone='Asia/Riyadh') }}"
+        #rrule: "{{ query('awx.awx.schedule_rrule', 'none', start_date='2025-10-20 11:30:00') }}"
+        controller_host: "{{ controller_host }}"
+        controller_username: "{{ controller_username }}"
+        controller_oauthtoken: "{{ controller_oauthtoken }}"
+      delegate_to: localhost
+      run_once: true 
+ 
     - name: Schedule One Week Before Email Notification
       vars:
         TZID: "Asia/Riyadh"
@@ -125,7 +130,6 @@
         state: present
         unified_job_template: "One Hour Prepatching Email"
         rrule: "{{ query('awx.awx.schedule_rrule', 'none', start_date=(one_hour_before.stdout), timezone='Asia/Riyadh') }}"
-        #rrule: "{{ query('awx.awx.schedule_rrule', 'none', start_date='2025-10-20 11:30:00') }}"
         controller_host: "{{ controller_host }}"
         controller_username: "{{ controller_username }}"
         controller_oauthtoken: "{{ controller_oauthtoken }}"
