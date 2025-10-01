@@ -1,0 +1,16 @@
+---
+- name: Send postpatching Email Notification
+  hosts: all
+  gather_facts: true
+  become: yes
+  vars_files:
+    - ../group_vars/email-creds.yml
+  tasks:
+    - name: Set the patching status fact
+      set_fact:
+        patching_status: success
+    - name: Build the report
+      ansible.builtin.include_role:
+        name: postpatching_report
+      run_once: yes
+      ignore_errors: true

@@ -14,12 +14,15 @@
         validate_certs: no
       register: vm_info
       delegate_to: localhost
+      when: take_snapshot == "yes"
     
     - name: Set the actual machine name
+      when: take_snapshot == "yes"
       set_fact:
         hostname_lower: "{{ ansible_hostname | lower }}"
         hostname_upper: "{{ ansible_hostname | upper }}"
     - name: Find the VM by name
+      when: take_snapshot == "yes"
       set_fact:
         actual_vm_name: >-
           {{
@@ -29,11 +32,12 @@
             | first
             }}
     - name: Print the vm name
+      when: take_snapshot == "yes"
       debug:
         var: actual_vm_name
 
     - name: Delete the old snapshot
-      community.vmware.vmware_guest_snapshot:
+      community.vmware.vmware.vm_snapshot:
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
@@ -56,14 +60,14 @@
 
  
     - name: Take a new snapshot
-      community.vmware.vmware_guest_snapshot:
+      community.vmware.vmware.vm_snapshot:
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
         validate_certs: no
         datacenter: "{{ vcenter_datacenter }}"
         folder: "{{ vcenter_vmfolder }}"
-        name: "{{ actual_vm_name }}"
+        name: "{{ actual_vm_name.guest_name }}"
         state: present
         snapshot_name: "{{ snapshot_name }}"
         description: "{{ snapshot_description }}"

@@ -161,6 +161,11 @@
           when: no_kernels.stdout|int >= 2
           notify: Check /boot space
       always:
+        
+        - name: Verify yum-utils package is installed
+          dnf:
+            name: yum-utils
+            state: present
         - name: Clear dnf cache before patching
           shell: dnf clean all
           become: true

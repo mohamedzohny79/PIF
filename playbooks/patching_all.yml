@@ -17,15 +17,7 @@
     ansible.builtin.include_tasks: "./roles/patch_os/tasks/reboot.yml"
     when: reboot == "yes"
 
-  post_tasks:
-    - name: Confirm system is running after patch
-      ansible.builtin.command: uptime
-      register: uptime_result
-      changed_when: false
-
-
-    - name: Build the report
-      ansible.builtin.include_role:
-        name: postpatching_report
-      run_once: yes
-      ignore_errors: true
+  - name: Confirm system is running after patch
+    ansible.builtin.command: uptime
+    register: uptime_result
+    changed_when: false 

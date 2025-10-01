@@ -11,7 +11,7 @@
         username: "{{ EMAIL_USERNAME }}"
         password: "{{ EMAIL_PASSWORD }}"
         port: "{{ EMAIL_PORT }}"
-        subject: "Linux Patching Report"
+        subject: "Linux OS Patching Life Cycle - {{ SERVICE }} - {{ ENV }}"
         body: "{{ lookup('template', 'templates/one_hour_notification.j2') }}"
         from: "{{ email_from }}"
         to: "{{ email_to }}"

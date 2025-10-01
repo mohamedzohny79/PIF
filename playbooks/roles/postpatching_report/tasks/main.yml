@@ -1,10 +1,10 @@
-- name: Send Report via E-mail
+- name: Send Report via E-mail for Successful Patching
   community.general.mail:
     host: "{{ EMAIL_HOST }}"
     username: "{{ EMAIL_USERNAME }}"
     password: "{{ EMAIL_PASSWORD }}"
     port: "{{ EMAIL_PORT }}"
-    subject: "Linux Patching Report"
+    subject: "Linux OS Patching Life Cycle - {{ SERVICE }} - {{ ENV }} - SUCCESS"
     body: "{{ lookup('template', 'report.j2') }}"
     from: "{{ email_from }}"
     to: "{{ to }}"
@@ -13,4 +13,21 @@
   delegate_to: localhost
   become: false
   check_mode: false
-  when: sendemailreport
+  when: patching_status == "success"
+  
+- name: Send Report via E-mail for Failed Patching
+  community.general.mail:
+    host: "{{ EMAIL_HOST }}"
+    username: "{{ EMAIL_USERNAME }}"
+    password: "{{ EMAIL_PASSWORD }}"
+    port: "{{ EMAIL_PORT }}"
+    subject: "Linux OS Patching Life Cycle - {{ SERVICE }} - {{ ENV }} - FAILED!"
+    body: "{{ lookup('template', 'patching_failure.j2') }}"
+    from: "{{ email_from }}"
+    to: "{{ to }}"
+    cc: "{{ cc }}"
+    subtype: html
+  delegate_to: localhost
+  become: false
+  check_mode: false
+  when: patching_status == "failed"
